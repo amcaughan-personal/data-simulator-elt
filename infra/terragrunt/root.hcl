@@ -7,10 +7,13 @@ locals {
     trimspace(get_env("AWS_WEB_IDENTITY_TOKEN_FILE", "")) == ""
   )
 
+  # On every taggable resource, so anything in the console points back to the code
+  # that manages it: the repo, and the Terragrunt stack within it.
   common_tags = {
-    Project   = "data-simulator-elt"
-    Owner     = "amcaughan"
+    Repo      = "amcaughan-personal/data-simulator-elt"
+    Stack     = path_relative_to_include() # e.g. live/dev/api
     ManagedBy = "terragrunt"
+    Owner     = "amcaughan"
   }
 }
 
