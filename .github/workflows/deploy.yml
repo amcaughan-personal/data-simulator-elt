@@ -1,6 +1,6 @@
 name: deploy
 
-# Ships the ingest code: build the package once, deploy it to staging and smoke-test it,
+# Ships the ingest code: build the package once, deploy it to dev and smoke-test it,
 # then deploy the same package to production (after approval, if the production
 # environment requires it) and smoke-test again.
 #
@@ -39,10 +39,10 @@ jobs:
           path: dist/ingest.zip
           if-no-files-found: error
 
-  staging:
+  dev:
     needs: build
     runs-on: ubuntu-latest
-    environment: staging
+    environment: dev
     permissions:
       contents: read
       id-token: write # to sign in to AWS as this environment's deploy role
@@ -64,7 +64,7 @@ jobs:
           FUNCTION_NAME: ${{ vars.FUNCTION_NAME }}
 
   production:
-    needs: staging
+    needs: dev
     runs-on: ubuntu-latest
     environment: production
     permissions:

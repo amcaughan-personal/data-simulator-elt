@@ -29,8 +29,9 @@ Why it's built this way: [design decisions](docs/design-decisions.md).
 
 ## AWS
 
-Three Terragrunt stacks per environment (`staging`, `prod`), with `env.hcl` holding the only
-differences:
+Three Terragrunt stacks per environment, with `env.hcl` holding the only differences. `dev` is a
+full copy of the pipeline that infrastructure and code changes go through before `prod`, and a
+place to experiment; both read the same production feed.
 
 | Stack | What it holds |
 |---|---|
@@ -47,10 +48,10 @@ free alarms.
 
 ## Deploys
 
-Infrastructure is applied by hand from a reviewed plan, staging before production. Code ships
+Infrastructure is applied by hand from a reviewed plan, dev before prod. Code ships
 through [the deploy workflow](.github/workflows/deploy.yml) on every merge that changes it:
-build the package once, deploy to staging and run each source once as a smoke test, then the
-same for production. Rolling back is re-running an earlier deploy.
+build the package once, deploy to dev and run each source once as a smoke test, then the same
+for prod. Rolling back is re-running an earlier deploy.
 
 ## Operations
 

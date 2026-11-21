@@ -1,5 +1,5 @@
 variable "name" {
-  description = "Name prefix for this environment, e.g. data-simulator-elt-staging"
+  description = "Name prefix for this environment, e.g. data-simulator-elt-dev"
   type        = string
 }
 

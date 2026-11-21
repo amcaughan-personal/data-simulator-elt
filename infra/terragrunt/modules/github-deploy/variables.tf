@@ -12,6 +12,6 @@ variable "github_repository" {
 }
 
 variable "github_environment" {
-  description = "The GitHub environment whose jobs may deploy (staging or production)"
+  description = "The GitHub environment whose jobs may deploy (dev or production)"
   type        = string
 }

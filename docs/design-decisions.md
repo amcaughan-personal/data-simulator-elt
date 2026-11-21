@@ -12,18 +12,19 @@ Why the pipeline is built the way it is, and what each choice gives up.
 - [No look-back for late data](#no-look-back-for-late-data)
 - [Lambda and a schedule, no orchestrator or VPC](#lambda-and-a-schedule-no-orchestrator-or-vpc)
 - [CI ships code; people apply infrastructure](#ci-ships-code-people-apply-infrastructure)
-- [Staging, then production, without a canary](#staging-then-production-without-a-canary)
+- [dev, then prod, without a canary](#dev-then-prod-without-a-canary)
 
 ## The source is treated as a third-party feed
 
 **Decision:** the pipeline knows the API only by its URL and its documented behaviour. Both
 environments read the API's production endpoint.
 
-**Why:** the point is a pipeline that could pull from any API. A real platform's staging usually
-reads a vendor's production feed, and the API's staging environment belongs to the API's own
-deploys, so coupling to it would break this pipeline for reasons that aren't its own.
+**Why:** the point is a pipeline that could pull from any API. A real platform's non-production
+environments usually read a vendor's production feed, and the API's own staging environment
+belongs to the API's deploys, so coupling to it would break this pipeline for reasons that
+aren't its own.
 
-**Trade-off:** an API change reaches this pipeline's staging and production at the same time.
+**Trade-off:** an API change reaches this pipeline's dev and prod at the same time.
 The contract check (below) stops both rather than letting bad data through.
 
 ## Extract and load only; transformation lives downstream
@@ -121,10 +122,10 @@ through the deploy workflow. Infrastructure changes are planned, reviewed and ap
 and can delete things. CI's deploy role can update and invoke one function and nothing else, and
 only jobs in that GitHub environment, on `main`, can assume it.
 
-## Staging, then production, without a canary
+## dev, then prod, without a canary
 
-**Decision:** each deploy goes to staging, runs every source once as a smoke test, then repeats
-both for production. There's no gradual rollout.
+**Decision:** each deploy goes to dev, runs every source once as a smoke test, then repeats both
+for prod. There's no gradual rollout.
 
 **Why:** a canary splits live traffic between versions, and a batch job has no traffic to split:
 a run either works or doesn't. The smoke test is a real run, and since runs are idempotent it
