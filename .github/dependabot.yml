@@ -16,19 +16,24 @@ updates:
       actions:
         patterns: ["*"]
         exclude-patterns: ["amcaughan-personal/*"]
-  - package-ecosystem: docker
-    directories:
-      - /containers/shared/source_ingest
-      - /containers/shared/standardize
-      - /containers/workflows/sample-api-polling-01/dbt
-      - /containers/workflows/sample-file-delivery-01/dbt
-      - /containers/workflows/sample-stream-events-01/dbt
-      - /containers/workflows/sample-stream-events-01/stream_emitter
-      - /local-dev/docker
+  - package-ecosystem: uv
+    directory: /
     schedule:
       interval: weekly
     cooldown:
       default-days: 7
+    groups:
+      python:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directories:
+      - /.devcontainer
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      # The org's own base image is already reviewed; take new digests right away.
+      exclude: ["ghcr.io/amcaughan-personal/*"]
     groups:
       base-images:
         patterns: ["*"]
