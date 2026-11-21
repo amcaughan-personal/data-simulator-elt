@@ -29,13 +29,15 @@ Why it's built this way: [design decisions](docs/design-decisions.md).
 
 ## AWS
 
-Two Terragrunt stacks per environment (`staging`, `prod`), with `env.hcl` holding the only
-differences:
+Three Terragrunt stacks per environment, with `env.hcl` holding the only differences. `dev` is a
+full copy of the pipeline that infrastructure and code changes go through before `prod`, and a
+place to experiment; both read the same production feed.
 
 | Stack | What it holds |
 |---|---|
 | `raw-zone` | the raw S3 bucket and a Glue database with one table per source (partition projection, so no crawlers) |
 | `ingest` | the Lambda (one run at a time, so runs can't race on the watermark), an hourly EventBridge schedule per source (at :05 UTC) and an alarm for two failed hours in a row (emails in production) |
+| `github-deploy` | the role GitHub Actions deploys as (only that GitHub environment's jobs can assume it; it can update and invoke this one function), and the values the deploy workflow reads |
 
 The API's URL is looked up from `/services/data-simulator-api/prod/url`, where the API
 publishes it. Both environments read the production API, as they would any external feed.
@@ -43,6 +45,13 @@ publishes it. Both environments read the production API, as they would any exter
 Cost: a few cents a month. Lambda, EventBridge Scheduler and the Glue catalog stay within the
 free tier at this volume; S3 holds a few MB per month; the alarm is within CloudWatch's 10
 free alarms.
+
+## Deploys
+
+Infrastructure is applied by hand from a reviewed plan, dev before prod. Code ships
+through [the deploy workflow](.github/workflows/deploy.yml) on every merge that changes it:
+build the package once, deploy to dev and run each source once as a smoke test, then the same
+for prod. Rolling back is re-running an earlier deploy.
 
 ## Operations
 
@@ -99,6 +108,7 @@ src/ingest/
   api.py, store.py the API client (retries with backoff) and the S3 raw zone
   handler.py       Lambda entry point
 tests/
+scripts/           build, deploy and smoke-test the Lambda (used by the deploy workflow)
 infra/terragrunt/  Terraform/Terragrunt for AWS
 docs/              design decisions
 ```

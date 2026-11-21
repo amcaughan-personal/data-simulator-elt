@@ -11,17 +11,20 @@ Why the pipeline is built the way it is, and what each choice gives up.
 - [One file defines a source](#one-file-defines-a-source)
 - [No look-back for late data](#no-look-back-for-late-data)
 - [Lambda and a schedule, no orchestrator or VPC](#lambda-and-a-schedule-no-orchestrator-or-vpc)
+- [CI ships code; people apply infrastructure](#ci-ships-code-people-apply-infrastructure)
+- [dev, then prod, without a canary](#dev-then-prod-without-a-canary)
 
 ## The source is treated as a third-party feed
 
 **Decision:** the pipeline knows the API only by its URL and its documented behaviour. Both
 environments read the API's production endpoint.
 
-**Why:** the point is a pipeline that could pull from any API. A real platform's staging usually
-reads a vendor's production feed, and the API's staging environment belongs to the API's own
-deploys, so coupling to it would break this pipeline for reasons that aren't its own.
+**Why:** the point is a pipeline that could pull from any API. A real platform's non-production
+environments usually read a vendor's production feed, and the API's own staging environment
+belongs to the API's deploys, so coupling to it would break this pipeline for reasons that
+aren't its own.
 
-**Trade-off:** an API change reaches this pipeline's staging and production at the same time.
+**Trade-off:** an API change reaches this pipeline's dev and prod at the same time.
 The contract check (below) stops both rather than letting bad data through.
 
 ## Extract and load only; transformation lives downstream
@@ -109,3 +112,22 @@ Functions, Airflow or VPC.
 **Why:** each run is a single short step, so an orchestrator would add cost and concepts without
 adding control. The function calls a public API and S3, so a VPC would only add NAT or endpoint
 costs. Everything is pay-per-use and stays near $0.
+
+## CI ships code; people apply infrastructure
+
+**Decision:** Terraform creates the function and then ignores its code. Every code change ships
+through the deploy workflow. Infrastructure changes are planned, reviewed and applied by hand.
+
+**Why:** code changes are frequent and low-risk to roll back; infrastructure changes are rarer
+and can delete things. CI's deploy role can update and invoke one function and nothing else, and
+only jobs in that GitHub environment, on `main`, can assume it.
+
+## dev, then prod, without a canary
+
+**Decision:** each deploy goes to dev, runs every source once as a smoke test, then repeats both
+for prod. There's no gradual rollout.
+
+**Why:** a canary splits live traffic between versions, and a batch job has no traffic to split:
+a run either works or doesn't. The smoke test is a real run, and since runs are idempotent it
+lands real data rather than a test case. If a bad version gets through, the alarm fires, and
+re-running an earlier deploy restores the last good code; the next run catches up.
