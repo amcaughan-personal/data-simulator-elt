@@ -1,5 +1,6 @@
 {
   "endpoint": "/v1/streams/window",
+  "load": "hourly",
   "hours_per_request": 24,
   "columns": {
     "timestamp": "timestamp",

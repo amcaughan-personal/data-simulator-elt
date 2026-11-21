@@ -2,8 +2,13 @@ variable "function_name" {
   type = string
 }
 
-variable "source_dir" {
+variable "package_dir" {
   description = "Directory holding the ingest package (src), zipped to create the function"
+  type        = string
+}
+
+variable "sources_dir" {
+  description = "The source files (src/ingest/sources); each gets an hourly schedule"
   type        = string
 }
 

@@ -22,7 +22,8 @@ dependency "raw_zone" {
 
 inputs = {
   function_name = "${local.env.name}-ingest"
-  source_dir    = "${get_repo_root()}/src" # zipped with the ingest package at its root
+  package_dir   = "${get_repo_root()}/src" # zipped with the ingest package at its root
+  sources_dir   = "${get_repo_root()}/src/ingest/sources"
 
   # To this pipeline the API is an external source: both environments read its production
   # feed, whose URL the API publishes here.
