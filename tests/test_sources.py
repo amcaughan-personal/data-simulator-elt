@@ -9,3 +9,12 @@ def test_every_transaction_merchant_is_in_the_merchants_snapshot():
     assert {name: p["count"] for name, p in transactions.items()} == {
         name: p["count"] for name, p in merchants.items()
     }
+
+
+def test_a_days_request_stays_well_inside_the_cell_limit():
+    """At the stream's rate, `hours_per_request` hours must fit in a response with room to spare
+    (the API allows 100,000 cells; the rate is an average, so leave at least half free)."""
+    source = load_source("transactions")
+    assert source.spec["rows"]["per"] == "1h"
+    cells = source.spec["rows"]["rate"] * source.hours_per_request * len(source.columns)
+    assert cells <= 50_000
