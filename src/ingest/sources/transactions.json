@@ -1,0 +1,159 @@
+{
+  "endpoint": "/v1/streams/window",
+  "columns": {
+    "timestamp": "timestamp",
+    "merchant_id": "string",
+    "merchant_category": "string",
+    "transaction_id": "integer",
+    "card_type": "string",
+    "status": "string",
+    "channel": "string",
+    "amount": "number",
+    "anomaly": "string"
+  },
+  "spec": {
+    "name": "transactions",
+    "description": "Card transactions at a small payments company's merchants.",
+    "seed": 20261101,
+    "start": "2026-01-01T00:00:00Z",
+    "profile_column": "merchant_category",
+    "id_column": "merchant_id",
+    "rows": {
+      "rate": 120,
+      "per": "1h",
+      "from": {
+        "grocery": 0.4,
+        "restaurant": 0.35,
+        "online": 0.2,
+        "travel": 0.05
+      }
+    },
+    "common_columns": {
+      "transaction_id": {
+        "sequence": {
+          "start": 1
+        }
+      },
+      "card_type": {
+        "categorical": {
+          "debit": 0.55,
+          "credit": 0.4,
+          "prepaid": 0.05
+        }
+      },
+      "status": {
+        "categorical": {
+          "approved": 0.96,
+          "declined": 0.04
+        }
+      }
+    },
+    "profiles": {
+      "grocery": {
+        "count": 20,
+        "columns": {
+          "channel": {
+            "categorical": {
+              "in_store": 0.9,
+              "online": 0.1
+            }
+          },
+          "amount": {
+            "lognormal": {
+              "median": 38,
+              "sigma": 0.7
+            },
+            "round": 2,
+            "anomalies": [
+              {
+                "name": "card_testing",
+                "set": 1.0,
+                "chance": 0.002
+              }
+            ]
+          }
+        }
+      },
+      "restaurant": {
+        "count": 30,
+        "columns": {
+          "channel": {
+            "categorical": {
+              "in_store": 0.8,
+              "online": 0.2
+            }
+          },
+          "amount": {
+            "lognormal": {
+              "median": 24,
+              "sigma": 0.6
+            },
+            "round": 2,
+            "seasonality": [
+              {
+                "period": "1d",
+                "amplitude": 8,
+                "peak": "19h"
+              }
+            ],
+            "anomalies": [
+              {
+                "name": "card_testing",
+                "set": 1.0,
+                "chance": 0.002
+              }
+            ]
+          }
+        }
+      },
+      "online": {
+        "count": 15,
+        "columns": {
+          "channel": {
+            "constant": "online"
+          },
+          "amount": {
+            "lognormal": {
+              "median": 45,
+              "sigma": 0.9
+            },
+            "round": 2,
+            "anomalies": [
+              {
+                "name": "card_testing",
+                "set": 1.0,
+                "chance": 0.01
+              }
+            ]
+          }
+        }
+      },
+      "travel": {
+        "count": 5,
+        "columns": {
+          "channel": {
+            "categorical": {
+              "in_store": 0.3,
+              "online": 0.7
+            }
+          },
+          "amount": {
+            "lognormal": {
+              "median": 320,
+              "sigma": 0.8
+            },
+            "round": 2,
+            "min": 20,
+            "anomalies": [
+              {
+                "name": "card_testing",
+                "set": 1.0,
+                "chance": 0.002
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

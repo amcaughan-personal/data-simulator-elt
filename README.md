@@ -17,10 +17,14 @@ EventBridge Scheduler (hourly) ─► ingest Lambda ─► S3 raw zone ─► Gl
 Raw data lands as the API returned it, as gzipped JSON lines partitioned by date and hour. Each
 hour has one fixed key, so pulling it again replaces it instead of duplicating it.
 
+Each source is one file in [`src/ingest/sources/`](src/ingest/sources): the spec sent to the API
+and the columns and types expected back. Every response is checked against those types before
+anything lands, so a change in the API stops the pipeline instead of quietly breaking the tables.
+
 ## Status
 
-The window planning is in `src/ingest/windows.py`. The API client, the Lambda and the AWS
-infrastructure are being built next.
+The ingest code runs locally against the API. Its AWS infrastructure (bucket, Glue tables,
+Lambda, schedules) is built next.
 
 ## Run it locally
 
@@ -38,7 +42,12 @@ Terragrunt and uv versions from `.tool-versions`.
 ## Repository layout
 
 ```
-src/ingest/        the ingest Lambda's code
+src/ingest/
+  sources/         what each source asks the API for, and the columns it expects back
+  windows.py       which hours to pull next, and where each lands
+  pipeline.py      pull, check against the contract, land, move the watermark
+  api.py, store.py the API client and the S3 raw zone
+  handler.py       Lambda entry point
 tests/
 infra/terragrunt/  Terraform/Terragrunt for AWS
 ```
