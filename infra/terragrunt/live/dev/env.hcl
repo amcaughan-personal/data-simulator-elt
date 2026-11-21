@@ -6,6 +6,6 @@ locals {
   name               = "data-simulator-elt-dev"
   github_environment = "dev" # deploys run in this GitHub environment
 
-  # dev failures don't email.
+  # dev failures don't email, so dev has no alarm; its logs show failures.
   alert_topic_name = null
 }

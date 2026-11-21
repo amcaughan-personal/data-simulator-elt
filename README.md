@@ -36,15 +36,15 @@ place to experiment; both read the same production feed.
 | Stack | What it holds |
 |---|---|
 | `raw-zone` | the raw S3 bucket and a Glue database with one table per source (partition projection, so no crawlers) |
-| `ingest` | the Lambda (one run at a time, so runs can't race on the watermark), an hourly EventBridge schedule per source (at :05 UTC) and an alarm for two failed hours in a row (emails in production) |
+| `ingest` | the Lambda (one run at a time, so runs can't race on the watermark), an hourly EventBridge schedule per source (at :05 UTC) and, in prod, an alarm that emails after two failed hours in a row |
 | `github-deploy` | the role GitHub Actions deploys as (only that GitHub environment's jobs can assume it; it can update and invoke this one function), and the values the deploy workflow reads |
 
 The API's URL is looked up from `/services/data-simulator-api/prod/url`, where the API
 publishes it. Both environments read the production API, as they would any external feed.
 
-Cost: a few cents a month. Lambda, EventBridge Scheduler and the Glue catalog stay within the
-free tier at this volume; S3 holds a few MB per month; the alarm is within CloudWatch's 10
-free alarms.
+Cost: about $0.12 a month, nearly all of it prod's one alarm ($0.10 beyond CloudWatch's 10 free
+alarms). Lambda, EventBridge Scheduler and the Glue catalog stay within the free tier at this
+volume, and S3 holds a few MB per month per environment.
 
 ## Deploys
 
@@ -60,8 +60,9 @@ whatever the last one didn't finish: hours after the watermark, or today's snaps
 missing. A run that's running out of time stops between requests and the next continues.
 There are no Lambda retries or dead-letter queues, because the next run is the retry.
 
-**The alarm** (`<name>-ingest-errors`) fires when runs fail in two consecutive hours. The
-Lambda's JSON logs say why. Common causes are the API being down or rate-limiting, or a
+**The alarm** (`data-simulator-elt-ingest-errors`, prod only) emails when runs fail in two
+consecutive hours. The Lambda's JSON logs say why: every run logs a `run finished` line with
+how many files it landed, and failures log the error. Common causes are the API being down or rate-limiting, or a
 contract error (the API changed its columns or types). Fix the cause; the next run catches up
 on its own.
 
