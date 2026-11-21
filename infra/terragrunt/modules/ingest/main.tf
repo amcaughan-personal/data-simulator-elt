@@ -188,10 +188,13 @@ resource "aws_scheduler_schedule" "this" {
 }
 
 # --------------------------------------------------------------------------------------
-# Alarm: two failed hours in a row
+# Alarm: two failed hours in a row. Only where it notifies someone (prod); without an
+# action it would only cost money.
 # --------------------------------------------------------------------------------------
 
 resource "aws_cloudwatch_metric_alarm" "errors" {
+  count = var.alert_topic_name == null ? 0 : 1
+
   alarm_name          = "${var.function_name}-errors"
   alarm_description   = "${var.function_name} failed in two consecutive hours. Its logs say why; the next successful run catches up."
   namespace           = "AWS/Lambda"
@@ -206,4 +209,9 @@ resource "aws_cloudwatch_metric_alarm" "errors" {
   treat_missing_data  = "notBreaching"
   alarm_actions       = data.aws_sns_topic.alerts[*].arn
   ok_actions          = data.aws_sns_topic.alerts[*].arn
+}
+
+moved {
+  from = aws_cloudwatch_metric_alarm.errors
+  to   = aws_cloudwatch_metric_alarm.errors[0]
 }

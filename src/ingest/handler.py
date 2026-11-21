@@ -8,6 +8,7 @@ Configuration (environment variables):
 - `MAX_HOURS_PER_RUN`: how many hours one run catches up at most
 """
 
+import logging
 import os
 from datetime import UTC, datetime
 from typing import Any
@@ -16,6 +17,8 @@ from ingest.api import ApiClient
 from ingest.pipeline import pull_daily_snapshot, pull_hourly
 from ingest.sources import load_source
 from ingest.store import S3Store
+
+log = logging.getLogger(__name__)
 
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
@@ -36,4 +39,8 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         )
     else:
         keys = pull_daily_snapshot(api, store, source, now)
-    return {"source": source.name, "landed": len(keys), "first": keys[:1], "last": keys[-1:]}
+
+    # One line per run, even when there was nothing new to land.
+    summary = {"source": source.name, "landed": len(keys), "first": keys[:1], "last": keys[-1:]}
+    log.info("run finished: %s landed %d files", source.name, len(keys), extra=summary)
+    return summary
