@@ -163,6 +163,7 @@ locals {
 }
 
 resource "aws_scheduler_schedule" "this" {
+  #checkov:skip=CKV_AWS_297:The schedule's only data is {"source": "<name>"}; AWS-owned encryption is enough
   for_each = local.schedules
 
   name                = "${var.function_name}-${each.key}"
