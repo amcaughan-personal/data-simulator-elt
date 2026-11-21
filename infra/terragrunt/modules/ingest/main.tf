@@ -1,5 +1,6 @@
-# The ingest Lambda and its schedules: every hour it pulls the transactions stream (catching
-# up from its watermark), and once a day the merchants snapshot. See src/ingest.
+# The ingest Lambda and its schedules: every hour, one invocation per source file in
+# src/ingest/sources. Hourly loads catch up from their watermark; daily snapshots pull only
+# if today's hasn't landed, so a failed run is retried by the next hour's. See src/ingest.
 #
 # Terraform owns the function's configuration; CI owns its code. The package built here is
 # only for creating the function. Deploys upload new code after that.
@@ -17,7 +18,7 @@ data "aws_sns_topic" "alerts" {
 
 data "archive_file" "initial_package" {
   type        = "zip"
-  source_dir  = var.source_dir
+  source_dir  = var.package_dir
   output_path = "${path.root}/.build/ingest.zip"
   excludes    = ["**/__pycache__/**"]
 }
@@ -104,9 +105,12 @@ resource "aws_lambda_function" "this" {
     }
   }
 
+  # JSON, so Logs Insights can filter and aggregate by field.
   logging_config {
-    log_format = "Text"
-    log_group  = aws_cloudwatch_log_group.this.name
+    log_format            = "JSON"
+    application_log_level = "INFO"
+    system_log_level      = "WARN"
+    log_group             = aws_cloudwatch_log_group.this.name
   }
 
   depends_on = [aws_iam_role_policy.function]
@@ -156,18 +160,16 @@ resource "aws_iam_role_policy" "scheduler" {
 }
 
 locals {
-  schedules = {
-    transactions = "cron(5 * * * ? *)"  # 5 minutes past every hour (UTC)
-    merchants    = "cron(15 6 * * ? *)" # 06:15 UTC every day
-  }
+  sources = toset([for file in fileset(var.sources_dir, "*.json") : trimsuffix(file, ".json")])
 }
 
+# 5 minutes past every hour (UTC), once the hour before is complete.
 resource "aws_scheduler_schedule" "this" {
   #checkov:skip=CKV_AWS_297:The schedule's only data is {"source": "<name>"}; AWS-owned encryption is enough
-  for_each = local.schedules
+  for_each = local.sources
 
   name                = "${var.function_name}-${each.key}"
-  schedule_expression = each.value
+  schedule_expression = "cron(5 * * * ? *)"
 
   flexible_time_window {
     mode = "OFF"

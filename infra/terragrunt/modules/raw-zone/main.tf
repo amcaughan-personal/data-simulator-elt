@@ -21,10 +21,18 @@ locals {
     timestamp = "string"
   }
 
-  tables = {
-    transactions = {
-      description    = "Card transactions, one file per hour, as the API returned them."
+  # One table per source file. Its columns come from the file; its partitions follow from
+  # how the source is loaded.
+  sources = {
+    for file in fileset(var.sources_dir, "*.json") :
+    trimsuffix(file, ".json") => jsondecode(file("${var.sources_dir}/${file}"))
+  }
+
+  layouts = {
+    hourly = {
+      description    = "One file per hour"
       partition_keys = ["dt", "hour"]
+      template       = "dt=$${dt}/hour=$${hour}/"
       projection = {
         "projection.dt.type"          = "date"
         "projection.dt.format"        = "yyyy-MM-dd"
@@ -35,11 +43,11 @@ locals {
         "projection.hour.range"       = "0,23"
         "projection.hour.digits"      = "2"
       }
-      template = "dt=$${dt}/hour=$${hour}/"
     }
-    merchants = {
-      description    = "Daily full snapshots of the merchants, as the API returned them."
+    daily_snapshot = {
+      description    = "One full snapshot per day"
       partition_keys = ["snapshot_date"]
+      template       = "snapshot_date=$${snapshot_date}/"
       projection = {
         "projection.snapshot_date.type"          = "date"
         "projection.snapshot_date.format"        = "yyyy-MM-dd"
@@ -47,13 +55,7 @@ locals {
         "projection.snapshot_date.interval"      = "1"
         "projection.snapshot_date.interval.unit" = "DAYS"
       }
-      template = "snapshot_date=$${snapshot_date}/"
     }
-  }
-
-  columns = {
-    for name in keys(local.tables) :
-    name => jsondecode(file("${var.sources_dir}/${name}.json")).columns
   }
 }
 
@@ -140,21 +142,21 @@ resource "aws_glue_catalog_database" "raw" {
 }
 
 resource "aws_glue_catalog_table" "raw" {
-  for_each = local.tables
+  for_each = local.sources
 
   database_name = aws_glue_catalog_database.raw.name
   name          = each.key
-  description   = each.value.description
+  description   = "${each.value.spec.description} ${local.layouts[each.value.load].description}, as the API returned it."
   table_type    = "EXTERNAL_TABLE"
 
-  parameters = merge(each.value.projection, {
+  parameters = merge(local.layouts[each.value.load].projection, {
     "classification"            = "json"
     "projection.enabled"        = "true"
-    "storage.location.template" = "s3://${aws_s3_bucket.raw.id}/${each.key}/${each.value.template}"
+    "storage.location.template" = "s3://${aws_s3_bucket.raw.id}/${each.key}/${local.layouts[each.value.load].template}"
   })
 
   dynamic "partition_keys" {
-    for_each = each.value.partition_keys
+    for_each = local.layouts[each.value.load].partition_keys
     content {
       name = partition_keys.value
       type = "string"
@@ -171,7 +173,7 @@ resource "aws_glue_catalog_table" "raw" {
     }
 
     dynamic "columns" {
-      for_each = local.columns[each.key]
+      for_each = each.value.columns
       content {
         name = columns.key
         type = local.athena_types[columns.value]

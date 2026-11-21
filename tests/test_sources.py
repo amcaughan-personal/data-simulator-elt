@@ -1,4 +1,4 @@
-from ingest.sources import load_source
+from ingest.sources import SOURCES_DIR, load_source
 
 
 def test_every_transaction_merchant_is_in_the_merchants_snapshot():
@@ -18,3 +18,8 @@ def test_a_days_request_stays_well_inside_the_cell_limit():
     assert source.spec["rows"]["per"] == "1h"
     cells = source.spec["rows"]["rate"] * source.hours_per_request * len(source.columns)
     assert cells <= 50_000
+
+
+def test_every_source_file_loads():
+    for path in SOURCES_DIR.glob("*.json"):
+        assert load_source(path.stem).columns

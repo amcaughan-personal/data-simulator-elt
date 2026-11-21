@@ -8,8 +8,8 @@ from ingest import api as api_module
 from ingest.api import ApiClient, ApiError, ContractError, check_contract
 
 
-def http_error(status):
-    return urllib.error.HTTPError("https://api.test/x", status, "error", {}, io.BytesIO(b"{}"))
+def http_error(status, headers=None):
+    return urllib.error.HTTPError("https://api.test/x", status, "error", headers or {}, io.BytesIO(b"{}"))
 
 
 def responding_with(*outcomes):
@@ -27,9 +27,15 @@ def responding_with(*outcomes):
 
 
 @pytest.fixture
-def client(monkeypatch):
-    monkeypatch.setattr(api_module.time, "sleep", lambda seconds: None)
-    return ApiClient("https://api.test/", attempts=3)
+def sleeps(monkeypatch):
+    waits = []
+    monkeypatch.setattr(api_module.time, "sleep", waits.append)
+    return waits
+
+
+@pytest.fixture
+def client(sleeps):
+    return ApiClient("https://api.test/", attempts=3, backoff_seconds=2)
 
 
 def test_retries_when_the_api_is_briefly_unavailable(client, monkeypatch):
@@ -39,6 +45,24 @@ def test_retries_when_the_api_is_briefly_unavailable(client, monkeypatch):
     assert client.post("/v1/datasets", {"seed": 1}) == {"rows": []}
     assert len(calls) == 3
     assert calls[0].full_url == "https://api.test/v1/datasets"
+
+
+def test_waits_as_long_as_the_server_asks_within_reason(client, monkeypatch, sleeps):
+    urlopen, _ = responding_with(
+        http_error(429, {"Retry-After": "7"}), http_error(429, {"Retry-After": "600"}), {"rows": []}
+    )
+    monkeypatch.setattr(api_module.urllib.request, "urlopen", urlopen)
+
+    client.post("/v1/datasets", {})
+    assert sleeps == [7, 30]
+
+
+def test_backs_off_with_jitter(client, monkeypatch, sleeps):
+    urlopen, _ = responding_with(http_error(503), http_error(503), {"rows": []})
+    monkeypatch.setattr(api_module.urllib.request, "urlopen", urlopen)
+
+    client.post("/v1/datasets", {})
+    assert 1 <= sleeps[0] <= 3 and 2 <= sleeps[1] <= 6
 
 
 def test_gives_up_after_the_last_attempt(client, monkeypatch):

@@ -1,5 +1,6 @@
 {
   "endpoint": "/v1/datasets",
+  "load": "daily_snapshot",
   "columns": {
     "merchant_id": "string",
     "merchant_category": "string",
