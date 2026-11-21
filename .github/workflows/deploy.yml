@@ -1,0 +1,88 @@
+name: deploy
+
+# Ships the ingest code: build the package once, deploy it to staging and smoke-test it,
+# then deploy the same package to production (after approval, if the production
+# environment requires it) and smoke-test again.
+#
+# Infrastructure (Terraform) is applied by hand; this only ships code. To roll back,
+# re-run an earlier run of this workflow. Each environment's DEPLOY_ROLE_ARN and
+# FUNCTION_NAME come from that environment's github-deploy stack, via personal-infra.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/ingest/**"
+      - "scripts/build-lambda.sh"
+      - "scripts/deploy.sh"
+      - "scripts/smoke-test.sh"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, in order; never cancel one halfway through.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: scripts/build-lambda.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ingest-package
+          path: dist/ingest.zip
+          if-no-files-found: error
+
+  staging:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write # to sign in to AWS as this environment's deploy role
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ingest-package
+          path: dist
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.DEPLOY_ROLE_ARN }}
+          aws-region: us-east-2
+      - run: scripts/deploy.sh "$FUNCTION_NAME" dist/ingest.zip
+        env:
+          FUNCTION_NAME: ${{ vars.FUNCTION_NAME }}
+      - run: scripts/smoke-test.sh "$FUNCTION_NAME"
+        env:
+          FUNCTION_NAME: ${{ vars.FUNCTION_NAME }}
+
+  production:
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ingest-package
+          path: dist
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.DEPLOY_ROLE_ARN }}
+          aws-region: us-east-2
+      - run: scripts/deploy.sh "$FUNCTION_NAME" dist/ingest.zip
+        env:
+          FUNCTION_NAME: ${{ vars.FUNCTION_NAME }}
+      - run: scripts/smoke-test.sh "$FUNCTION_NAME"
+        env:
+          FUNCTION_NAME: ${{ vars.FUNCTION_NAME }}
