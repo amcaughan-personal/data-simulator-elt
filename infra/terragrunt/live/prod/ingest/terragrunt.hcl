@@ -21,15 +21,19 @@ dependency "raw_zone" {
 }
 
 inputs = {
-  function_name     = "${local.env.name}-ingest"
-  source_dir        = "${get_repo_root()}/src/ingest"
-  api_url_parameter = local.env.api_url_parameter
-  raw_bucket_name   = dependency.raw_zone.outputs.bucket_name
-  raw_bucket_arn    = dependency.raw_zone.outputs.bucket_arn
-  alert_topic_name  = local.env.alert_topic_name
+  function_name = "${local.env.name}-ingest"
+  source_dir    = "${get_repo_root()}/src" # zipped with the ingest package at its root
 
-  # Land everything since 1 November; after that, each hourly run normally pulls one hour.
-  # Catching up 24 hours a run stays well inside the API's per-IP and daily limits.
+  # To this pipeline the API is an external source: both environments read its production
+  # feed, whose URL the API publishes here.
+  api_url_parameter = "/services/data-simulator-api/prod/url"
+
+  raw_bucket_name  = dependency.raw_zone.outputs.bucket_name
+  raw_bucket_arn   = dependency.raw_zone.outputs.bucket_arn
+  alert_topic_name = local.env.alert_topic_name
+
+  # Land everything since 1 November; after that, each hourly run pulls one hour. A run
+  # catches up at most 31 days, a request per day (see hours_per_request in the source file).
   first_hour        = "2026-11-01T00:00:00Z"
-  max_hours_per_run = 24
+  max_hours_per_run = 744
 }

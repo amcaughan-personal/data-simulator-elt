@@ -3,7 +3,7 @@ variable "function_name" {
 }
 
 variable "source_dir" {
-  description = "The ingest package (src/ingest), zipped to create the function"
+  description = "Directory holding the ingest package (src), zipped to create the function"
   type        = string
 }
 
