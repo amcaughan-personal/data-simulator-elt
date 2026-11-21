@@ -1,0 +1,3 @@
+# Tool versions for CI's format check, matching local-dev/docker/Dockerfile.
+terraform 1.14.2
+terragrunt 0.94.0
