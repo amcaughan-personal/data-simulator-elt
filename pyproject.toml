@@ -5,10 +5,12 @@ description = "Pulls the data-simulator API's payments data into S3, hour by hou
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.14"
+# boto3 is provided by the Lambda runtime, so it's only a dev dependency here.
 dependencies = []
 
 [dependency-groups]
 dev = [
+    "boto3>=1.40",
     "pytest>=8.3",
     "ruff>=0.11",
 ]

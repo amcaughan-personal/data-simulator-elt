@@ -1,0 +1,71 @@
+{
+  "endpoint": "/v1/datasets",
+  "columns": {
+    "merchant_id": "string",
+    "merchant_category": "string",
+    "city": "string",
+    "risk_tier": "string",
+    "monthly_fee": "integer"
+  },
+  "spec": {
+    "name": "merchants",
+    "description": "The payments company's merchants: one row each.",
+    "seed": 20261101,
+    "profile_column": "merchant_category",
+    "id_column": "merchant_id",
+    "rows": {
+      "one_each": true
+    },
+    "common_columns": {
+      "city": {
+        "categorical": {
+          "Chicago": 0.4,
+          "Columbus": 0.25,
+          "Detroit": 0.2,
+          "Cleveland": 0.15
+        }
+      },
+      "risk_tier": {
+        "categorical": {
+          "low": 0.8,
+          "medium": 0.15,
+          "high": 0.05
+        }
+      }
+    },
+    "profiles": {
+      "grocery": {
+        "count": 20,
+        "columns": {
+          "monthly_fee": {
+            "constant": 25
+          }
+        }
+      },
+      "restaurant": {
+        "count": 30,
+        "columns": {
+          "monthly_fee": {
+            "constant": 15
+          }
+        }
+      },
+      "online": {
+        "count": 15,
+        "columns": {
+          "monthly_fee": {
+            "constant": 40
+          }
+        }
+      },
+      "travel": {
+        "count": 5,
+        "columns": {
+          "monthly_fee": {
+            "constant": 60
+          }
+        }
+      }
+    }
+  }
+}
