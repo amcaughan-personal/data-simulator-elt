@@ -69,7 +69,7 @@
             "anomalies": [
               {
                 "name": "card_testing",
-                "set": 1.0,
+                "multiply": 0.03,
                 "chance": 0.002
               }
             ]
@@ -101,10 +101,11 @@
             "anomalies": [
               {
                 "name": "card_testing",
-                "set": 1.0,
+                "multiply": 0.03,
                 "chance": 0.002
               }
-            ]
+            ],
+            "min": 3
           }
         }
       },
@@ -123,7 +124,7 @@
             "anomalies": [
               {
                 "name": "card_testing",
-                "set": 1.0,
+                "multiply": 0.03,
                 "chance": 0.01
               }
             ]
@@ -149,7 +150,7 @@
             "anomalies": [
               {
                 "name": "card_testing",
-                "set": 1.0,
+                "multiply": 0.03,
                 "chance": 0.002
               }
             ]
