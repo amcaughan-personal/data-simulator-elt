@@ -3,3 +3,5 @@
 # applies to any new resource.
 skip-check:
   - CKV_GHA_7 # workflow_dispatch input is intentional (optional deep gitleaks scan)
+  - CKV_AWS_338 # Log groups: 1-year retention is unnecessary for a small personal project
+  - CKV_AWS_158 # Log groups: customer-managed KMS keys aren't worth the key management here
