@@ -1,17 +1,23 @@
+# Tool versions are set once, in the repo's .tool-versions (also read by the dev container and
+# CI). Running with any other version stops here instead of drifting.
+terraform_version_constraint  = "= ${local.tool_versions.terraform}"
+terragrunt_version_constraint = "= ${local.tool_versions.terragrunt}"
+
 locals {
+  tool_versions = {
+    for line in split("\n", file("${get_repo_root()}/.tool-versions")) :
+    split(" ", trimspace(line))[0] => split(" ", trimspace(line))[1]
+    if length(regexall("^[a-z]", trimspace(line))) > 0
+  }
+
   aws_region  = "us-east-2"
-  aws_profile = trimspace(get_env("AWS_PROFILE", "default"))
-  use_aws_profile = (
-    local.aws_profile != "" &&
-    trimspace(get_env("AWS_ACCESS_KEY_ID", "")) == "" &&
-    trimspace(get_env("AWS_WEB_IDENTITY_TOKEN_FILE", "")) == ""
-  )
+  aws_profile = "default"
 
   # On every taggable resource, so anything in the console points back to the code
   # that manages it: the repo, and the Terragrunt stack within it.
   common_tags = {
     Repo      = "amcaughan-personal/data-simulator-elt"
-    Stack     = path_relative_to_include() # e.g. live/dev/api
+    Stack     = path_relative_to_include() # e.g. live/staging/ingest
     ManagedBy = "terragrunt"
     Owner     = "amcaughan"
   }
@@ -41,7 +47,7 @@ variable "extra_default_tags" {
 
 provider "aws" {
   region  = "${local.aws_region}"
-${local.use_aws_profile ? "  profile = \"${local.aws_profile}\"" : ""}
+  profile = "${local.aws_profile}"
 
   default_tags {
     tags = merge(${jsonencode(local.common_tags)}, var.extra_default_tags)
