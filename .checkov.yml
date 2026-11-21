@@ -1,0 +1,5 @@
+# Repo-wide decisions only. Anything about a specific resource is skipped inline, next
+# to that resource, with a "#checkov:skip=CHECK:reason" comment, so the same check still
+# applies to any new resource.
+skip-check:
+  - CKV_GHA_7 # workflow_dispatch input is intentional (optional deep gitleaks scan)
