@@ -25,4 +25,8 @@ inputs = {
   function_arn       = dependency.ingest.outputs.function_arn
   github_repository  = "data-simulator-elt"
   github_environment = local.env.github_environment
+
+  # GitHub's immutable subject: the org and repo by name and numeric ID. A repo deleted and
+  # recreated under the same name gets a new ID, so its tokens can't assume this role.
+  oidc_subject_prefix = "repo:amcaughan-personal@271645414/data-simulator-elt@1179589127"
 }
