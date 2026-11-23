@@ -11,6 +11,11 @@ variable "github_repository" {
   type        = string
 }
 
+variable "oidc_subject_prefix" {
+  description = "The repository part of GitHub's OIDC subject claim (see the repo's OIDC settings)"
+  type        = string
+}
+
 variable "github_environment" {
   description = "The GitHub environment whose jobs may deploy (dev or production)"
   type        = string
