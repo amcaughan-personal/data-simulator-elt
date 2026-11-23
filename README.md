@@ -57,6 +57,9 @@ through [the deploy workflow](.github/workflows/deploy.yml) on every merge that 
 build the package once, deploy to dev and run each source once as a smoke test, then the same
 for prod. Rolling back is re-running an earlier deploy.
 
+A [daily drift check](.github/workflows/drift.yml) plans `main` read-only and fails if AWS
+doesn't match it: a change made outside Terraform, or one merged but not applied.
+
 ## Operations
 
 **Failures retry themselves.** Every load is safe to re-run, and each hourly run picks up
