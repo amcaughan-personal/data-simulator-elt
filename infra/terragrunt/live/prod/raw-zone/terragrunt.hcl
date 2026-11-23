@@ -13,4 +13,7 @@ terraform {
 inputs = {
   name        = local.env.name
   sources_dir = "${get_repo_root()}/src/ingest/sources"
+
+  # The first day ingest loads (its first_hour); the _history tables start here.
+  first_day = "2026-11-01"
 }
