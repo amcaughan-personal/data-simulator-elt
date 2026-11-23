@@ -11,7 +11,7 @@ Why the pipeline is built the way it is, and what each choice gives up.
 - [One file defines a source](#one-file-defines-a-source)
 - [No look-back for late data](#no-look-back-for-late-data)
 - [Lambda and a schedule, no orchestrator or VPC](#lambda-and-a-schedule-no-orchestrator-or-vpc)
-- [CI ships code; people apply infrastructure](#ci-ships-code-people-apply-infrastructure)
+- [CI ships code and applies infrastructure, but never deletes](#ci-ships-code-and-applies-infrastructure-but-never-deletes)
 - [dev, then prod, without a canary](#dev-then-prod-without-a-canary)
 
 ## The source is treated as a third-party feed
@@ -113,14 +113,23 @@ Functions, Airflow or VPC.
 adding control. The function calls a public API and S3, so a VPC would only add NAT or endpoint
 costs. Everything is pay-per-use and stays near $0.
 
-## CI ships code; people apply infrastructure
+## CI ships code and applies infrastructure, but never deletes
 
 **Decision:** Terraform creates the function and then ignores its code. Every code change ships
-through the deploy workflow. Infrastructure changes are planned, reviewed and applied by hand.
+through the deploy workflow. Infrastructure changes are planned on the pull request and applied
+from `main` by CI, dev first, prod after approval. CI's apply role can create and change this
+repo's resources but not delete them; anything that would destroy or replace a resource is
+applied by hand.
 
-**Why:** code changes are frequent and low-risk to roll back; infrastructure changes are rarer
-and can delete things. CI's deploy role can update and invoke one function and nothing else, and
-only jobs in that GitHub environment, on `main`, can assume it.
+**Why:** code changes are frequent and low-risk to roll back. Infrastructure changes are rarer,
+and the risky ones are deletes, so those keep a person in the loop. Each CI role is as narrow as
+its job, and all of them are defined in personal-infra, out of this repo's reach:
+
+- The deploy role can update and invoke one function, from that GitHub environment on `main`.
+- The apply role can act only on `data-simulator-elt*` resources, only from the `infra-*`
+  environments. Roles it creates must carry a permissions boundary that caps them at this
+  repo's logs, buckets and functions, so an apply can't hand out more than it has.
+- The plan role used on pull requests is read-only and can't read data or secrets.
 
 ## dev, then prod, without a canary
 

@@ -1,0 +1,47 @@
+name: terragrunt-apply
+
+# Applies infrastructure from main: dev, then prod, which waits for approval in the
+# infra-production environment. A stack that would destroy or replace anything stops the
+# run and is applied locally. Output stays on the runner (this repo is public); the run's
+# summary lists the changes by address and type.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "src/ingest/sources/**" # each source file defines a Glue table and a schedule
+      - ".tool-versions"
+      - ".github/workflows/terragrunt-apply.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dev:
+    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-apply.yml@d7f632dc13b7d3036981405592353139ad4abc49 # v2.1.0
+    permissions:
+      contents: read
+      id-token: write # to sign in to AWS as the apply role
+    with:
+      terragrunt_working_dir: infra/terragrunt/live/dev
+      environment: infra-dev
+      aws_region: us-east-2
+      report_title: "Terragrunt apply: dev"
+    secrets:
+      aws_role_arn: ${{ secrets.APPLY_ROLE_ARN }}
+
+  prod:
+    needs: dev
+    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-apply.yml@d7f632dc13b7d3036981405592353139ad4abc49 # v2.1.0
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      terragrunt_working_dir: infra/terragrunt/live/prod
+      environment: infra-production
+      aws_region: us-east-2
+      report_title: "Terragrunt apply: prod"
+    secrets:
+      aws_role_arn: ${{ secrets.APPLY_ROLE_ARN }}

@@ -4,7 +4,7 @@ name: deploy
 # then deploy the same package to production (after approval, if the production
 # environment requires it) and smoke-test again.
 #
-# Infrastructure (Terraform) is applied by hand; this only ships code. To roll back,
+# Infrastructure is applied by terragrunt-apply.yml; this only ships code. To roll back,
 # re-run an earlier run of this workflow. Each environment's DEPLOY_ROLE_ARN and
 # FUNCTION_NAME come from personal-infra's deploy role stack for that environment.
 
