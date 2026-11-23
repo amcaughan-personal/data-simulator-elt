@@ -49,7 +49,10 @@ volume, and S3 holds a few MB per month per environment.
 
 ## Deploys
 
-Infrastructure is applied by hand from a reviewed plan, dev before prod. Code ships
+Infrastructure changes get a plan comment on their pull request, and
+[terragrunt-apply](.github/workflows/terragrunt-apply.yml) applies them after merging: dev, then
+prod once approved. It can create and change this repo's resources but not delete them, so a
+change that would destroy or replace anything stops there and is applied by hand. Code ships
 through [the deploy workflow](.github/workflows/deploy.yml) on every merge that changes it:
 build the package once, deploy to dev and run each source once as a smoke test, then the same
 for prod. Rolling back is re-running an earlier deploy.
