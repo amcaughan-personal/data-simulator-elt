@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   plan:
-    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-plan.yml@175221d4dfeaa5527095a2c3f8aff97e00b14f51 # v2.1.1
+    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-plan.yml@5c9536caef6afd0c59537424148e42ef62b65273 # v2.2.0
     with:
       aws_region: us-east-2
     secrets:
