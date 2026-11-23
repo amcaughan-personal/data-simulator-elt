@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   formatting:
-    uses: amcaughan-personal/shared-workflows/.github/workflows/format-check.yml@299c2f6e41e4dec27a67978c68e1798981914041 # v1.0.1
+    uses: amcaughan-personal/shared-workflows/.github/workflows/format-check.yml@edf4427c6b814c667e8e1a8b7258d454a8eb188f # v1.0.1
     with:
       terraform_modules_dir: infra/terragrunt
       terragrunt_working_dir: infra/terragrunt
