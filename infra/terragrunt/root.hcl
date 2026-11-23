@@ -22,6 +22,12 @@ locals {
   }
 }
 
+# personal-infra's boundary for this repo's IAM roles (see its github-ci-apply-role module).
+# Every module that creates a role attaches it.
+inputs = {
+  permissions_boundary_name = "github-ci-boundary-data-simulator-elt"
+}
+
 remote_state {
   backend = "s3"
 

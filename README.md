@@ -29,7 +29,7 @@ Why it's built this way: [design decisions](docs/design-decisions.md).
 
 ## AWS
 
-Three Terragrunt stacks per environment, with `env.hcl` holding the only differences. `dev` is a
+Two Terragrunt stacks per environment, with `env.hcl` holding the only differences. `dev` is a
 full copy of the pipeline that infrastructure and code changes go through before `prod`, and a
 place to experiment; both read the same production feed.
 
@@ -37,7 +37,8 @@ place to experiment; both read the same production feed.
 |---|---|
 | `raw-zone` | the raw S3 bucket and a Glue database with one table per source (partition projection, so no crawlers) |
 | `ingest` | the Lambda (one run at a time, so runs can't race on the watermark), an hourly EventBridge schedule per source (at :05 UTC) and, in prod, an alarm that emails after two failed hours in a row |
-| `github-deploy` | the role GitHub Actions deploys as (only that GitHub environment's jobs can assume it; it can update and invoke this one function), and the values the deploy workflow reads |
+
+The role GitHub Actions deploys code as lives in personal-infra (`github-ci-roles/data-simulator-elt/deploy-<env>`): only that GitHub environment's jobs can assume it, and it can update and invoke this one function. Every IAM role created here carries personal-infra's permissions boundary for this repo.
 
 The API's URL is looked up from `/services/data-simulator-api/prod/url`, where the API
 publishes it. Both environments read the production API, as they would any external feed.

@@ -50,3 +50,8 @@ variable "log_retention_days" {
   type    = number
   default = 30
 }
+
+variable "permissions_boundary_name" {
+  description = "IAM policy attached as the permissions boundary of every role this module creates."
+  type        = string
+}

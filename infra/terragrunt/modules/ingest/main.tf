@@ -16,6 +16,15 @@ data "aws_sns_topic" "alerts" {
   name  = var.alert_topic_name
 }
 
+# Every role this repo creates carries its permissions boundary, from personal-infra: CI
+# applies can create and change roles only with it, and it caps what they can do.
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
+
+locals {
+  permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
+}
+
 data "archive_file" "initial_package" {
   type        = "zip"
   source_dir  = var.package_dir
@@ -64,8 +73,9 @@ data "aws_iam_policy_document" "function" {
 }
 
 resource "aws_iam_role" "function" {
-  name               = "${var.function_name}-role"
-  assume_role_policy = data.aws_iam_policy_document.assume.json
+  name                 = "${var.function_name}-role"
+  assume_role_policy   = data.aws_iam_policy_document.assume.json
+  permissions_boundary = local.permissions_boundary
 }
 
 resource "aws_iam_role_policy" "function" {
@@ -149,8 +159,9 @@ data "aws_iam_policy_document" "scheduler" {
 }
 
 resource "aws_iam_role" "scheduler" {
-  name               = "${var.function_name}-scheduler"
-  assume_role_policy = data.aws_iam_policy_document.scheduler_assume.json
+  name                 = "${var.function_name}-scheduler"
+  assume_role_policy   = data.aws_iam_policy_document.scheduler_assume.json
+  permissions_boundary = local.permissions_boundary
 }
 
 resource "aws_iam_role_policy" "scheduler" {
