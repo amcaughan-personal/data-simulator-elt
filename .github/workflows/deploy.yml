@@ -6,7 +6,7 @@ name: deploy
 #
 # Infrastructure (Terraform) is applied by hand; this only ships code. To roll back,
 # re-run an earlier run of this workflow. Each environment's DEPLOY_ROLE_ARN and
-# FUNCTION_NAME come from that environment's github-deploy stack, via personal-infra.
+# FUNCTION_NAME come from personal-infra's deploy role stack for that environment.
 
 on:
   push:
