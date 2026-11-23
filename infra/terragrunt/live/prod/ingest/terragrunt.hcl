@@ -29,9 +29,10 @@ inputs = {
   # feed, whose URL the API publishes here.
   api_url_parameter = "/services/data-simulator-api/prod/url"
 
-  raw_bucket_name  = dependency.raw_zone.outputs.bucket_name
-  raw_bucket_arn   = dependency.raw_zone.outputs.bucket_arn
-  alert_topic_name = local.env.alert_topic_name
+  raw_bucket_name    = dependency.raw_zone.outputs.bucket_name
+  raw_bucket_arn     = dependency.raw_zone.outputs.bucket_arn
+  alert_topic_name   = local.env.alert_topic_name
+  log_retention_days = local.env.log_retention_days
 
   # Land everything since 1 November; after that, each hourly run pulls one hour. A run
   # catches up at most 31 days, a request per day (see hours_per_request in the source file).

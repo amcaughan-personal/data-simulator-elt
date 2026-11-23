@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   dev:
-    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-apply.yml@d7f632dc13b7d3036981405592353139ad4abc49 # v2.1.0
+    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-apply.yml@175221d4dfeaa5527095a2c3f8aff97e00b14f51 # v2.1.1
     permissions:
       contents: read
       id-token: write # to sign in to AWS as the apply role
@@ -34,7 +34,7 @@ jobs:
 
   prod:
     needs: dev
-    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-apply.yml@d7f632dc13b7d3036981405592353139ad4abc49 # v2.1.0
+    uses: amcaughan-personal/shared-workflows/.github/workflows/terragrunt-apply.yml@175221d4dfeaa5527095a2c3f8aff97e00b14f51 # v2.1.1
     permissions:
       contents: read
       id-token: write
