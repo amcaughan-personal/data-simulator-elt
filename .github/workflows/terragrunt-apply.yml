@@ -1,10 +1,10 @@
 name: terragrunt-apply
 
 # Applies infrastructure from main: dev, then prod, which waits for approval in the
-# infra-production environment. The dev job also plans prod, so the run's summary shows
-# what prod will do before it's approved. A stack that would destroy or replace anything stops the
-# run and is applied locally. Output stays on the runner (this repo is public); the run's
-# summary lists the changes by address and type.
+# infra-production environment. The dev job also plans prod, so the run's summary shows what
+# prod will do before it's approved. A stack that would destroy or replace anything stops
+# the run and is applied locally. Output stays on the runner (this repo is public); the
+# run's summary lists the changes by address and type.
 
 on:
   push:
