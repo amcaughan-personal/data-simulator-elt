@@ -35,7 +35,7 @@ place to experiment; both read the same production feed.
 
 | Stack | What it holds |
 |---|---|
-| `raw-zone` | the raw S3 bucket and a Glue database with one table per source (partition projection, so no crawlers) |
+| `raw-zone` | the raw S3 bucket and a Glue database with two tables per source (partition projection, so no crawlers): `<source>` covers the last 14 days, `<source>_history` everything since the first day |
 | `ingest` | the Lambda (one run at a time, so runs can't race on the watermark), an hourly EventBridge schedule per source (at :05 UTC) and, in prod, an alarm that emails after two failed hours in a row |
 
 The role GitHub Actions deploys code as lives in personal-infra (`github-ci-roles/data-simulator-elt/deploy-<env>`): only that GitHub environment's jobs can assume it, and it can update and invoke this one function. Every IAM role created here carries personal-infra's permissions boundary for this repo.
@@ -80,12 +80,15 @@ echo '{"loaded_through": "2026-11-10T00:00:00Z"}' |
 
 To re-pull a day's merchants snapshot, delete that day's file.
 
-**Querying the raw data** (Athena, database `<name>_raw`):
+**Querying the raw data** (Athena, database `<name>_raw`). `transactions` and `merchants`
+cover the last 14 days; `transactions_history` and `merchants_history` reach back to the first
+day, for full rebuilds. Filter on `dt` (or `snapshot_date`) where you can: Athena lists one S3
+prefix per partition it can't rule out.
 
 ```sql
 select dt, count(*) as transactions
 from transactions
-where dt >= '2026-11-01'
+where dt >= '2026-11-20'
 group by dt
 order by dt;
 ```

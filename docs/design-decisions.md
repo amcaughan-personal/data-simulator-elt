@@ -9,6 +9,7 @@ Why the pipeline is built the way it is, and what each choice gives up.
 - [A contract checked on every response](#a-contract-checked-on-every-response)
 - [Raw stays JSON, exactly as received](#raw-stays-json-exactly-as-received)
 - [One file defines a source](#one-file-defines-a-source)
+- [The raw tables reach back 14 days](#the-raw-tables-reach-back-14-days)
 - [No look-back for late data](#no-look-back-for-late-data)
 - [Lambda and a schedule, no orchestrator or VPC](#lambda-and-a-schedule-no-orchestrator-or-vpc)
 - [CI ships code and applies infrastructure, but never deletes](#ci-ships-code-and-applies-infrastructure-but-never-deletes)
@@ -94,6 +95,23 @@ partitions follow from the load type, and an hourly schedule.
 
 **Why:** adding or changing a source happens in one place, and the tables can't disagree with
 the checks.
+
+## The raw tables reach back 14 days
+
+**Decision:** each source has two Glue tables over the same files. `<source>` projects only
+the last 14 days (`NOW-14DAYS,NOW`); `<source>_history` projects everything since the first
+day. Routine queries, including analytics' daily build, use the first; only deliberate full
+rebuilds use the history tables.
+
+**Why:** with partition projection, Athena lists one S3 prefix per partition a query can't rule
+out, and S3 bills each list. A range fixed at the start meant every unfiltered query listed
+every hour since then, so the cost grew with the pipeline's age: by late November it was about
+$0.55 a day, nearly all of it listing empty prefixes. A rolling window caps a query at
+14 × 24 prefixes, however long the pipeline runs.
+
+**Trade-off:** older raw data is only reachable through the history tables, so a full rebuild
+names them explicitly (analytics' backfill does). 14 days is longer than analytics should ever
+go without a successful run; if it does, its build fails rather than skipping the missing days.
 
 ## No look-back for late data
 
