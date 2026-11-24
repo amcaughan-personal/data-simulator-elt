@@ -1,5 +1,9 @@
 # data-simulator-elt
 
+> **Paused (November 2026).** The AWS resources are torn down to save cost, so nothing is
+> ingesting; the code, infrastructure and CI are all here. [Resuming](#resuming) brings it
+> back.
+
 Pulls a small payments business's data from an external API into a raw zone in S3,
 incrementally, for querying with Athena. The source is the
 [data-simulator API](https://github.com/amcaughan-personal/data-simulator-api), but nothing
@@ -95,6 +99,15 @@ where dt >= '2026-11-20'
 group by dt
 order by dt;
 ```
+
+## Resuming
+
+1. Revert the pause PR, which turns the automatic triggers back on (deploy, apply, drift).
+2. Run [terragrunt-apply](.github/workflows/terragrunt-apply.yml) by hand (Actions, *Run
+   workflow*), or apply `raw-zone` then `ingest` in each environment locally. CI's apply role
+   can create everything here, including the function from the code in `src/`.
+3. The first hourly runs land everything since `first_hour` (1 November), at most 31 days per
+   run; data-simulator-analytics can then be resumed.
 
 ## Run it locally
 
