@@ -9,14 +9,8 @@ name: deploy
 # FUNCTION_NAME come from personal-infra's deploy role stack for that environment.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "src/ingest/**"
-      - "scripts/build-lambda.sh"
-      - "scripts/deploy.sh"
-      - "scripts/smoke-test.sh"
-      - ".github/workflows/deploy.yml"
+  # Paused while this project's AWS resources are torn down (see the README): runs only when
+  # started by hand. Reverting the pause PR restores the automatic triggers.
   workflow_dispatch:
 
 permissions:

@@ -6,8 +6,8 @@ name: drift
 # and type only (this repo is public).
 
 on:
-  schedule:
-    - cron: "10 6 * * *"
+  # Paused while this project's AWS resources are torn down (see the README): runs only when
+  # started by hand. Reverting the pause PR restores the automatic triggers.
   workflow_dispatch:
 
 permissions:

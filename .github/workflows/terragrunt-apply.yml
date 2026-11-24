@@ -7,14 +7,8 @@ name: terragrunt-apply
 # run's summary lists the changes by address and type.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "infra/**"
-      - "src/ingest/sources/**" # each source file defines a Glue table and a schedule
-      - ".tool-versions"
-  # Changes to this file alone (e.g. Dependabot bumping the shared workflow) don't apply
-  # anything; run it by hand to try a change to it.
+  # Paused while this project's AWS resources are torn down (see the README): runs only when
+  # started by hand. Reverting the pause PR restores the automatic triggers.
   workflow_dispatch:
 
 permissions:
